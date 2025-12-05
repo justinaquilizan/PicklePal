@@ -1,20 +1,18 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
-import Navbar from "./components/Navbar";
-import OfflineBanner from "./components/OfflineBanner";
+import Layout from "./components/Layout";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import Dashboard from "./pages/Dashboard"; // Will create this next
-import Home from "./pages/Home"; // Will create this next
+import Dashboard from "./pages/Dashboard";
+import Home from "./pages/Home";
 import Rules from "./pages/Rules";
 import LiveMatch from "./pages/LiveMatch";
+import Profile from "./pages/Profile";
 import OAuthSuccess from "./pages/OAuthSuccess";
 
 function App() {
   return (
-    <div className="App">
-      <Navbar />
-      <OfflineBanner />
+    <Layout>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
@@ -22,9 +20,10 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/rules" element={<Rules />} />
         <Route path="/live-match" element={<LiveMatch />} />
+        <Route path="/profile" element={<Profile />} />
         <Route path="/oauth-success" element={<OAuthSuccess />} />
       </Routes>
-    </div>
+    </Layout>
   );
 }
 
