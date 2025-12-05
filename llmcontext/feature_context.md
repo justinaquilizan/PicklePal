@@ -136,6 +136,41 @@ _(Currently Empty - To be filled when development starts)_
 
 ---
 
+**Feature:** Story 4.1: Manifest & Icons
+**Date Completed:** 12/05/2025
+**Key Files Created/Modified:**
+
+- `/client/public/manifest.json` (PWA manifest configuration)
+- `/client/index.html` (PWA meta tags and manifest link)
+- `/client/public/icons/` (PWA icons directory)
+  **Implementation Notes:**
+- Created manifest.json with short_name: "PicklePal", start_url: ".", display: "standalone".
+- Configured theme_color: #22c55e (Pickleball Green) and background_color: #ffffff.
+- Added PWA meta tags to index.html including theme-color, mobile-web-app-capable, and apple-touch-icon.
+- Set up proper icon structure with 192x192 and 512x512 PNG icons for different device sizes.
+- Configured orientation: portrait-primary and scope: "/" for proper mobile app behavior.
+
+---
+
+**Feature:** Story 4.2: Service Worker (Vite PWA)
+**Date Completed:** 12/05/2025
+**Key Files Created/Modified:**
+
+- `/client/vite.config.js` (PWA plugin configuration)
+- `/client/src/components/Navbar.jsx` (PWA detection and online/offline status)
+- `/client/src/components/OfflineBanner.jsx` (Connection status notifications)
+- `/client/src/App.jsx` (Added OfflineBanner component)
+  **Implementation Notes:**
+- Installed and configured vite-plugin-pwa with registerType: 'autoUpdate'.
+- Set up Workbox service worker with globPatterns for caching static assets (js, css, html, ico, png, svg).
+- Implemented PWA detection logic using window.matchMedia('(display-mode: standalone)') and navigator.standalone.
+- Added real-time online/offline status monitoring with visual indicators in Navbar.
+- Created OfflineBanner component that shows connection status changes with auto-dismissal.
+- Enhanced UI to disable online-dependent features (Login, Register, Dashboard, Live Match) when offline.
+- App loads in offline mode and serves cached content, particularly the Rules page for offline reference.
+
+---
+
 ### Template for Future Entries:
 
 **Feature:** [Name]

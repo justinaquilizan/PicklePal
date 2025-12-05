@@ -1,6 +1,7 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
+import OfflineBanner from "./components/OfflineBanner";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard"; // Will create this next
@@ -13,6 +14,7 @@ function App() {
   return (
     <div className="App">
       <Navbar />
+      <OfflineBanner />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
