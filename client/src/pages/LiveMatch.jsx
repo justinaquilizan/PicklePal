@@ -13,7 +13,7 @@ const LiveMatch = () => {
     opponentName: "",
     playerScore: 0,
     opponentScore: 0,
-    isServing: true, // Player starts serving
+    isServing: true,
   });
 
   const [matchCode, setMatchCode] = useState("");
@@ -23,6 +23,7 @@ const LiveMatch = () => {
   const [matchStarted, setMatchStarted] = useState(false);
   const [checkingCode, setCheckingCode] = useState(false);
   const [matchJoined, setMatchJoined] = useState(false);
+  const [isPlayer1, setIsPlayer1] = useState(true); // Track if current user is player 1
 
   // Generate a random 6-character match code
   const generateMatchCode = () => {
@@ -55,7 +56,21 @@ const LiveMatch = () => {
     socketRef.current.on("match_joined", (data) => {
       console.log("Successfully joined match:", data);
       setMatchJoined(true);
+      setIsPlayer1(data.isPlayer1);
       setError("");
+
+      // Initialize scores from server
+      if (data.scores) {
+        setMatchData((prev) => ({
+          ...prev,
+          playerScore: data.isPlayer1
+            ? data.scores.player1
+            : data.scores.player2,
+          opponentScore: data.isPlayer1
+            ? data.scores.player2
+            : data.scores.player1,
+        }));
+      }
     });
 
     // Listen for server errors
@@ -68,11 +83,19 @@ const LiveMatch = () => {
     // Listen for score updates from other clients
     socketRef.current.on("score_updated", (data) => {
       console.log("Received score update:", data);
-      setMatchData((prev) => ({
-        ...prev,
-        playerScore: data.playerScore,
-        opponentScore: data.opponentScore,
-      }));
+      setMatchData((prev) => {
+        // Map server scores to client perspective based on player role
+        const myScore = isPlayer1 ? data.scores.player1 : data.scores.player2;
+        const opponentScore = isPlayer1
+          ? data.scores.player2
+          : data.scores.player1;
+
+        return {
+          ...prev,
+          playerScore: myScore,
+          opponentScore: opponentScore,
+        };
+      });
     });
 
     return () => {
@@ -80,7 +103,7 @@ const LiveMatch = () => {
         socketRef.current.disconnect();
       }
     };
-  }, [auth.token, navigate]);
+  }, [auth.token, navigate, isPlayer1]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -101,7 +124,10 @@ const LiveMatch = () => {
 
     // Join the match room with the generated code
     if (socketRef.current && connected) {
-      socketRef.current.emit("join_match", newCode);
+      socketRef.current.emit("join_match", {
+        matchId: newCode,
+        userId: auth.user?.id || "unknown",
+      });
     }
   };
 
@@ -132,7 +158,10 @@ const LiveMatch = () => {
       setMatchJoined(false);
 
       if (socketRef.current && connected) {
-        socketRef.current.emit("join_match", joinCode);
+        socketRef.current.emit("join_match", {
+          matchId: joinCode,
+          userId: auth.user?.id || "unknown",
+        });
       }
     } catch (err) {
       console.error("Error checking match code:", err);
@@ -163,26 +192,34 @@ const LiveMatch = () => {
       return;
     }
 
-    const newMatchData = { ...matchData };
+    // Determine which player score to update based on current user's role
+    const serverPlayer = isPlayer1
+      ? player === "player"
+        ? "player1"
+        : "player2"
+      : player === "player"
+      ? "player2"
+      : "player1";
 
-    if (player === "player") {
-      newMatchData.playerScore = Math.max(0, matchData.playerScore + increment);
-    } else {
-      newMatchData.opponentScore = Math.max(
-        0,
-        matchData.opponentScore + increment
-      );
-    }
+    const currentScore =
+      player === "player" ? matchData.playerScore : matchData.opponentScore;
+    const newScore = Math.max(0, currentScore + increment);
 
     // Update local state optimistically
+    const newMatchData = { ...matchData };
+    if (player === "player") {
+      newMatchData.playerScore = newScore;
+    } else {
+      newMatchData.opponentScore = newScore;
+    }
     setMatchData(newMatchData);
 
     // Emit score update to server
     if (socketRef.current && connected) {
       socketRef.current.emit("update_score", {
         matchId: matchCode,
-        playerScore: newMatchData.playerScore,
-        opponentScore: newMatchData.opponentScore,
+        player: serverPlayer,
+        score: newScore,
       });
     }
   };
@@ -201,11 +238,21 @@ const LiveMatch = () => {
     setMatchData(newMatchData);
 
     if (socketRef.current && connected) {
+      // Reset both scores on server
       socketRef.current.emit("update_score", {
         matchId: matchCode,
-        playerScore: 0,
-        opponentScore: 0,
+        player: isPlayer1 ? "player1" : "player2",
+        score: 0,
       });
+
+      // Also reset opponent score if match has 2 players
+      if (matchJoined) {
+        socketRef.current.emit("update_score", {
+          matchId: matchCode,
+          player: isPlayer1 ? "player2" : "player1",
+          score: 0,
+        });
+      }
     }
   };
 
@@ -238,9 +285,16 @@ const LiveMatch = () => {
   };
 
   const determineWinner = () => {
-    if (matchData.playerScore > matchData.opponentScore) return "You Win! 🎉";
-    if (matchData.opponentScore > matchData.playerScore) return "Opponent Wins";
-    return "Tied Game";
+    if (matchData.playerScore >= 11 || matchData.opponentScore >= 11) {
+      if (matchData.playerScore > matchData.opponentScore) {
+        return "You Win! 🎉";
+      } else if (matchData.opponentScore > matchData.playerScore) {
+        return "Opponent Wins";
+      } else {
+        return "Tied Game";
+      }
+    }
+    return "";
   };
 
   return (
@@ -376,6 +430,7 @@ const LiveMatch = () => {
                       setMatchCode("");
                       setJoinCode("");
                       setMatchJoined(false);
+                      setIsPlayer1(true); // Reset to default
                     }}
                     className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
                     Back

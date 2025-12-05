@@ -24,7 +24,7 @@ const matchSchema = mongoose.Schema(
     result: {
       type: String,
       required: true,
-      enum: ["win", "loss"],
+      enum: ["win", "loss", "tie"],
     },
     date: {
       type: Date,

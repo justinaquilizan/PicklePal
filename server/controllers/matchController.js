@@ -31,8 +31,16 @@ const createMatch = async (req, res) => {
         .json({ message: "Please provide all required fields" });
     }
 
-    // Determine result
-    const result = playerScore > opponentScore ? "win" : "loss";
+    // Determine result based on who actually scored higher
+    // The playerScore is always from the current user's perspective
+    let result;
+    if (playerScore > opponentScore) {
+      result = "win";
+    } else if (opponentScore > playerScore) {
+      result = "loss";
+    } else {
+      result = "tie"; // Handle tie case, though you may want to adjust the schema
+    }
 
     const match = new Match({
       user: req.user.id,
@@ -74,8 +82,62 @@ const deleteMatch = async (req, res) => {
   }
 };
 
+// @desc    Update a match
+// @route   PUT /api/matches/:id
+// @access  Private
+const updateMatch = async (req, res) => {
+  try {
+    const { opponentName, playerScore, opponentScore } = req.body;
+
+    // Validate input
+    if (
+      !opponentName ||
+      playerScore === undefined ||
+      opponentScore === undefined
+    ) {
+      return res
+        .status(400)
+        .json({ message: "Please provide all required fields" });
+    }
+
+    const match = await Match.findById(req.params.id);
+
+    if (!match) {
+      return res.status(404).json({ message: "Match not found" });
+    }
+
+    // Check if match belongs to user
+    if (match.user.toString() !== req.user.id) {
+      return res.status(401).json({ message: "Not authorized" });
+    }
+
+    // Determine result based on who actually scored higher
+    let result;
+    if (playerScore > opponentScore) {
+      result = "win";
+    } else if (opponentScore > playerScore) {
+      result = "loss";
+    } else {
+      result = "tie";
+    }
+
+    // Update match fields
+    match.opponentName = opponentName;
+    match.playerScore = playerScore;
+    match.opponentScore = opponentScore;
+    match.result = result;
+
+    const updatedMatch = await match.save();
+    res.json(updatedMatch);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server Error" });
+  }
+};
+
 module.exports = {
   getMatches,
   createMatch,
+  updateMatch,
   deleteMatch,
 };

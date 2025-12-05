@@ -14,6 +14,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingMatch, setEditingMatch] = useState(null);
 
   useEffect(() => {
     if (!auth.token) {
@@ -47,6 +48,26 @@ const Dashboard = () => {
 
   const handleMatchAdded = (newMatch) => {
     setMatches([newMatch, ...matches]);
+    setIsModalOpen(false);
+  };
+
+  const handleMatchUpdated = (updatedMatch) => {
+    setMatches(
+      matches.map((match) =>
+        match._id === updatedMatch._id ? updatedMatch : match
+      )
+    );
+    setIsModalOpen(false);
+    setEditingMatch(null);
+  };
+
+  const handleEditMatch = (match) => {
+    setEditingMatch(match);
+    setIsModalOpen(true);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMatch(null);
     setIsModalOpen(false);
   };
 
@@ -222,7 +243,7 @@ const Dashboard = () => {
               </p>
               <button
                 onClick={() => setIsModalOpen(true)}
-                className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all">
+                className="px-6 py-3 bg-linear-to-r from-green-500 to-emerald-600 text-white font-semibold rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all">
                 Add Your First Match
               </button>
             </div>
@@ -260,24 +281,46 @@ const Dashboard = () => {
                       {match.playerScore} - {match.opponentScore}
                     </div>
 
-                    {/* Delete Button */}
-                    <button
-                      onClick={() => handleDeleteMatch(match._id)}
-                      className="text-gray-400 hover:text-red-600 transition-colors p-2"
-                      title="Delete match">
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                        />
-                      </svg>
-                    </button>
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-1">
+                      {/* Edit Button */}
+                      <button
+                        onClick={() => handleEditMatch(match)}
+                        className="text-gray-400 hover:text-blue-600 transition-colors p-2"
+                        title="Edit match">
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                          />
+                        </svg>
+                      </button>
+
+                      {/* Delete Button */}
+                      <button
+                        onClick={() => handleDeleteMatch(match._id)}
+                        className="text-gray-400 hover:text-red-600 transition-colors p-2"
+                        title="Delete match">
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -293,12 +336,17 @@ const Dashboard = () => {
         label="Add Match"
       />
 
-      {/* Add Match Modal */}
+      {/* Add/Edit Match Modal */}
       <Modal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="Add New Match">
-        <MatchForm onMatchAdded={handleMatchAdded} />
+        onClose={handleCancelEdit}
+        title={editingMatch ? "Edit Match" : "Add New Match"}>
+        <MatchForm
+          onMatchAdded={handleMatchAdded}
+          onMatchUpdated={handleMatchUpdated}
+          editingMatch={editingMatch}
+          onCancel={handleCancelEdit}
+        />
       </Modal>
     </div>
   );

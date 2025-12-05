@@ -4,7 +4,6 @@ dotenv.config();
 const express = require("express");
 const http = require("http");
 const socketIo = require("socket.io");
-// const cors = require("cors"); // We are replacing this with manual middleware
 const connectDB = require("./config/db");
 const passport = require("passport");
 const session = require("express-session");
@@ -23,35 +22,24 @@ const io = socketIo(server, {
   },
 });
 
-// ==========================================
-// FIX: MANUAL CORS MIDDLEWARE
-// ==========================================
-// This bypasses the 'cors' package and 'path-to-regexp' issues entirely.
 app.use((req, res, next) => {
-  // 1. Allow your frontend origin
   res.header("Access-Control-Allow-Origin", "http://localhost:5173");
-
-  // 2. Allow credentials (cookies/sessions)
   res.header("Access-Control-Allow-Credentials", "true");
-
-  // 3. Allow specific HTTP methods
   res.header(
     "Access-Control-Allow-Methods",
     "GET, POST, PUT, DELETE, PATCH, OPTIONS"
   );
 
-  // 4. Allow specific headers (including your custom x-auth-token)
   res.header(
     "Access-Control-Allow-Headers",
     "Origin, X-Requested-With, Content-Type, Accept, Authorization, x-auth-token"
   );
 
-  // 5. Handle the "Preflight" (OPTIONS) request immediately
   if (req.method === "OPTIONS") {
-    return res.sendStatus(200); // Send OK immediately for preflight
+    return res.sendStatus(200);
   }
 
-  next(); // Continue to other routes for GET/POST/etc.
+  next();
 });
 
 console.log("Manual CORS middleware configured for: http://localhost:5173");
@@ -65,9 +53,9 @@ app.use(
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: false, // Set to true if using https
+      secure: false,
       httpOnly: true,
-      maxAge: 1000 * 60 * 60 * 24, // 1 day
+      maxAge: 1000 * 60 * 60 * 24,
     },
   })
 );
@@ -77,7 +65,6 @@ app.use(passport.session());
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/matches", require("./routes/matchRoutes"));
 
-// Check if match exists
 app.get("/api/matches/check/:matchId", (req, res) => {
   const { matchId } = req.params;
   const exists = activeMatches.has(matchId);
@@ -100,7 +87,7 @@ app.get("/", (req, res) => {
 
 // Generic error handler
 app.use((err, req, res, next) => {
-  console.error("Server Error:", err); // Log the error to terminal
+  console.error("Server Error:", err);
   const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
   res.status(statusCode);
   res.json({
@@ -119,37 +106,48 @@ io.on("connection", (socket) => {
   console.log("New client connected:", socket.id);
 
   // Join a match room for live scoring
-  socket.on("join_match", (matchId) => {
+  socket.on("join_match", (data) => {
+    const { matchId, userId } = data;
     console.log(
-      `Client ${socket.id} attempting to join match room: ${matchId}`
+      `Client ${socket.id} (user ${userId}) attempting to join match room: ${matchId}`
     );
 
     // Check if match exists or create new one
     if (!activeMatches.has(matchId)) {
       activeMatches.set(matchId, {
         createdAt: new Date(),
-        players: [socket.id],
+        players: [{ socketId: socket.id, userId, isPlayer1: true }],
+        scores: { player1: 0, player2: 0 },
       });
       console.log(`Created new match room: ${matchId}`);
     } else {
       // Add player to existing match
       const match = activeMatches.get(matchId);
-      match.players.push(socket.id);
-      console.log(`Added player to existing match room: ${matchId}`);
+      if (match.players.length < 2) {
+        match.players.push({ socketId: socket.id, userId, isPlayer1: false });
+        console.log(`Added player 2 to existing match room: ${matchId}`);
+      } else {
+        socket.emit("error", { message: "Match room is full" });
+        return;
+      }
     }
 
     socket.join(matchId);
 
-    // Notify client about successful join
+    // Notify client about successful join with player role
+    const match = activeMatches.get(matchId);
+    const currentPlayer = match.players.find((p) => p.socketId === socket.id);
     socket.emit("match_joined", {
       matchId,
-      playerCount: activeMatches.get(matchId).players.length,
+      playerCount: match.players.length,
+      isPlayer1: currentPlayer.isPlayer1,
+      scores: match.scores,
     });
   });
 
   // Handle score updates
   socket.on("update_score", (data) => {
-    const { matchId, playerScore, opponentScore } = data;
+    const { matchId, player, score } = data;
 
     // Validate that match exists
     if (!activeMatches.has(matchId)) {
@@ -157,14 +155,37 @@ io.on("connection", (socket) => {
       return;
     }
 
+    const match = activeMatches.get(matchId);
+    const currentPlayer = match.players.find((p) => p.socketId === socket.id);
+
+    if (!currentPlayer) {
+      socket.emit("error", { message: "You are not in this match" });
+      return;
+    }
+
+    // Update the correct score based on which player is updating
+    if (currentPlayer.isPlayer1) {
+      if (player === "player1") {
+        match.scores.player1 = Math.max(0, score);
+      } else if (player === "player2" && match.players.length === 2) {
+        match.scores.player2 = Math.max(0, score);
+      }
+    } else {
+      if (player === "player2") {
+        match.scores.player2 = Math.max(0, score);
+      } else if (player === "player1" && match.players.length === 2) {
+        match.scores.player1 = Math.max(0, score);
+      }
+    }
+
     console.log(
-      `Score update for match ${matchId}: ${playerScore} - ${opponentScore}`
+      `Score update for match ${matchId}: Player 1: ${match.scores.player1}, Player 2: ${match.scores.player2}`
     );
 
-    // Broadcast to all clients in the match room
+    // Broadcast to all clients in the match room with role information
     io.to(matchId).emit("score_updated", {
-      playerScore,
-      opponentScore,
+      scores: match.scores,
+      isPlayer1: currentPlayer.isPlayer1,
     });
   });
 
@@ -174,7 +195,7 @@ io.on("connection", (socket) => {
 
     // Remove player from all matches
     activeMatches.forEach((match, matchId) => {
-      match.players = match.players.filter((id) => id !== socket.id);
+      match.players = match.players.filter((p) => p.socketId !== socket.id);
 
       // Remove match if no players left
       if (match.players.length === 0) {

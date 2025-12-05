@@ -1,7 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 
-const MatchForm = ({ onMatchAdded }) => {
+const MatchForm = ({
+  onMatchAdded,
+  onMatchUpdated,
+  editingMatch,
+  onCancel,
+}) => {
   const [formData, setFormData] = useState({
     opponentName: "",
     playerScore: "",
@@ -11,6 +16,23 @@ const MatchForm = ({ onMatchAdded }) => {
   const [error, setError] = useState("");
 
   const { opponentName, playerScore, opponentScore } = formData;
+
+  // Initialize form with editing match data
+  useEffect(() => {
+    if (editingMatch) {
+      setFormData({
+        opponentName: editingMatch.opponentName,
+        playerScore: editingMatch.playerScore.toString(),
+        opponentScore: editingMatch.opponentScore.toString(),
+      });
+    } else {
+      setFormData({
+        opponentName: "",
+        playerScore: "",
+        opponentScore: "",
+      });
+    }
+  }, [editingMatch]);
 
   const onChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -30,15 +52,32 @@ const MatchForm = ({ onMatchAdded }) => {
         },
       };
 
-      const { data } = await axios.post(
-        "http://localhost:5001/api/matches",
-        {
-          opponentName,
-          playerScore: parseInt(playerScore),
-          opponentScore: parseInt(opponentScore),
-        },
-        config
-      );
+      let response;
+      if (editingMatch) {
+        // Update existing match
+        response = await axios.put(
+          `http://localhost:5001/api/matches/${editingMatch._id}`,
+          {
+            opponentName,
+            playerScore: parseInt(playerScore),
+            opponentScore: parseInt(opponentScore),
+          },
+          config
+        );
+      } else {
+        // Create new match
+        response = await axios.post(
+          "http://localhost:5001/api/matches",
+          {
+            opponentName,
+            playerScore: parseInt(playerScore),
+            opponentScore: parseInt(opponentScore),
+          },
+          config
+        );
+      }
+
+      const { data } = response;
 
       // Reset form
       setFormData({
@@ -48,13 +87,17 @@ const MatchForm = ({ onMatchAdded }) => {
       });
 
       // Notify parent component
-      if (onMatchAdded) {
+      if (editingMatch && onMatchUpdated) {
+        onMatchUpdated(data);
+      } else if (!editingMatch && onMatchAdded) {
         onMatchAdded(data);
       }
     } catch (err) {
       setError(
         err.response?.data?.message ||
-          "An error occurred while adding the match"
+          `An error occurred while ${
+            editingMatch ? "updating" : "adding"
+          } the match`
       );
     } finally {
       setLoading(false);
@@ -129,12 +172,28 @@ const MatchForm = ({ onMatchAdded }) => {
       </div>
 
       {/* Submit Button - Full Width */}
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full py-3.5 px-4 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-bold rounded-xl shadow-lg shadow-green-200 transition-all active:scale-95 disabled:scale-100 disabled:cursor-not-allowed text-base">
-        {loading ? "Adding..." : "Log Match"}
-      </button>
+      <div className="flex gap-3">
+        {editingMatch && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex-1 py-3.5 px-4 bg-gray-500 hover:bg-gray-600 text-white font-bold rounded-xl shadow-lg shadow-gray-200 transition-all active:scale-95 text-base">
+            Cancel
+          </button>
+        )}
+        <button
+          type="submit"
+          disabled={loading}
+          className="flex-1 py-3.5 px-4 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-bold rounded-xl shadow-lg shadow-green-200 transition-all active:scale-95 disabled:scale-100 disabled:cursor-not-allowed text-base">
+          {loading
+            ? editingMatch
+              ? "Updating..."
+              : "Adding..."
+            : editingMatch
+            ? "Update Match"
+            : "Log Match"}
+        </button>
+      </div>
     </form>
   );
 };
