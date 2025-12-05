@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext } from "react";
+import React, { createContext, useState, useEffect } from "react";
 import axios from "axios";
 
 const AuthContext = createContext();
@@ -10,7 +10,7 @@ export const AuthProvider = ({ children }) => {
   });
 
   useEffect(() => {
-    axios.defaults.baseURL = "http://localhost:5000/api";
+    axios.defaults.baseURL = "http://localhost:5001/api"; // Updated port to 5001 (server)
     axios.defaults.headers.common["x-auth-token"] = auth.token;
 
     if (auth.token) {
@@ -61,10 +61,10 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ auth, login, register, logout }}>
+    <AuthContext.Provider value={{ auth, setAuth, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export { AuthContext };

@@ -44,6 +44,25 @@ _(Currently Empty - To be filled when development starts)_
 
 ---
 
+**Feature:** Story 1.4: Google OAuth Integration
+**Date Completed:** 12/01/2025
+**Key Files Created/Modified:**
+
+- `server/config/passport.js` (Google OAuth Strategy setup)
+- `server/routes/authRoutes.js` (Google OAuth endpoints)
+- `server/server.js` (Passport middleware integration)
+- `server/.env` (Google API credentials)
+- `client/src/pages/Login.jsx` (Google login button)
+- `client/src/pages/Register.jsx` (Google register button)
+  **Implementation Notes:**
+- Installed `passport` and `passport-google-oauth20` in the server.
+- Configured GoogleStrategy to check for existing users by `googleId` or create new ones, setting `password: null` for Google-authenticated users.
+- Added `GET /api/auth/google` to initiate the OAuth flow and `GET /api/auth/google/callback` to handle the redirect and authentication success/failure.
+- Integrated `passport.initialize()` and `passport.session()` middleware in `server.js` (along with `express-session`).
+- Updated `Login.jsx` and `Register.jsx` to provide functional "Sign in with Google" buttons that redirect to the backend OAuth endpoint.
+
+---
+
 ### Template for Future Entries:
 
 **Feature:** [Name]
