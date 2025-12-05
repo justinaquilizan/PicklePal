@@ -65,6 +65,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 app.use("/api/auth", require("./routes/authRoutes"));
+app.use("/api/matches", require("./routes/matchRoutes"));
 
 app.get("/", (req, res) => {
   res.send("API is running...");

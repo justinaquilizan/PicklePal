@@ -8,18 +8,19 @@ const Home = () => {
         Welcome to PicklePal!
       </h1>
       <p className="text-lg text-gray-600 mb-8 text-center">
-        Your ultimate platform for managing your pickleball journey.
+        Your ultimate platform for managing your pickleball journey. Track
+        matches, learn rules, and improve your game.
       </p>
       <div className="flex space-x-4">
         <Link
-          to="/login"
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-          Login
+          to="/rules"
+          className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+          Learn Rules
         </Link>
         <Link
-          to="/register"
-          className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-          Register
+          to="/dashboard"
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+          Go to Dashboard
         </Link>
       </div>
     </div>

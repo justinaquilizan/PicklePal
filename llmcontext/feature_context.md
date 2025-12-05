@@ -63,6 +63,44 @@ _(Currently Empty - To be filled when development starts)_
 
 ---
 
+**Feature:** Story 2.1: The "Rulebook" (Static Page)
+**Date Completed:** 12/05/2025
+**Key Files Created/Modified:**
+
+- `/client/src/pages/Rules.jsx` (Static rules page)
+- `/client/src/components/Navbar.jsx` (Navigation component)
+- `/client/src/App.jsx` (Added Rules route)
+- `/client/src/pages/Home.jsx` (Updated navigation)
+  **Implementation Notes:**
+- Created comprehensive Rules.jsx page with pickleball rules including Kitchen rules, Scoring, Serving, Double Bounce, and Common Faults.
+- Implemented responsive design using Tailwind CSS with proper sections, formatting, and visual indicators.
+- Added Navbar component with Rules link always accessible and authentication-aware navigation.
+- Integrated Rules route into App.jsx and updated Home.jsx to remove duplicate navigation.
+- Content is fully hardcoded and requires no API calls, making it suitable for offline functionality.
+
+---
+
+**Feature:** Story 2.2: Match CRUD (Create, Read, Delete)
+**Date Completed:** 12/05/2025
+**Key Files Created/Modified:**
+
+- `/server/models/Match.js` (Match schema with user filtering)
+- `/server/controllers/matchController.js` (CRUD endpoints)
+- `/server/routes/matchRoutes.js` (API routing)
+- `/server/middleware/authMiddleware.js` (JWT protection)
+- `/server/server.js` (Added match routes)
+- `/client/src/components/MatchForm.jsx` (Create form)
+- `/client/src/pages/Dashboard.jsx` (Read and Delete functionality)
+  **Implementation Notes:**
+- Created Match model with user reference to ensure data isolation (req.user.id filtering).
+- Implemented REST endpoints: GET /api/matches (user's matches), POST /api/matches (create), DELETE /api/matches/:id (delete own matches only).
+- Built MatchForm component with form validation, loading states, and error handling.
+- Updated Dashboard to display match history in table format with delete functionality and statistics summary.
+- Added proper JWT authentication middleware to protect all match endpoints.
+- Frontend uses useEffect to fetch matches on load and updates local state for immediate UI feedback.
+
+---
+
 ### Template for Future Entries:
 
 **Feature:** [Name]
