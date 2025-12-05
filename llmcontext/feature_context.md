@@ -101,6 +101,41 @@ _(Currently Empty - To be filled when development starts)_
 
 ---
 
+**Feature:** Story 3.1: Socket.io Setup & Connection
+**Date Completed:** 12/05/2025
+**Key Files Created/Modified:**
+
+- `/server/server.js` (HTTP server wrapper, Socket.io initialization)
+- `/server/package.json` (Added socket.io dependency)
+- `/client/package.json` (Added socket.io-client dependency)
+  **Implementation Notes:**
+- Installed socket.io (server) and socket.io-client (frontend) packages.
+- Updated server.js to wrap Express app with HTTP server and initialize Socket.io with CORS configuration.
+- Added connection event handlers that log "New client connected" and "Client disconnected".
+- Implemented room-based connection system with join_match event for match-specific communication.
+- No CORS errors during connection with proper origin and credentials configuration.
+
+---
+
+**Feature:** Story 3.2: Live Scoring Logic
+**Date Completed:** 12/05/2025
+**Key Files Created/Modified:**
+
+- `/client/src/pages/LiveMatch.jsx` (Live scoring component)
+- `/server/server.js` (Score update event handling)
+- `/client/src/App.jsx` (Added LiveMatch route)
+- `/client/src/components/Navbar.jsx` (Added Live Match link)
+  **Implementation Notes:**
+- Created comprehensive LiveMatch.jsx with real-time scoring UI, connection status indicator, and match setup.
+- Implemented Socket.io client connection with automatic reconnection and room joining.
+- Added optimistic UI updates: local state updates immediately, then emits update_score event to server.
+- Backend broadcasts score updates via io.to(matchId).emit('score_updated', data) to all clients in match room.
+- Frontend useEffect listens for score_updated events and updates state automatically without refresh.
+- Features include +/- point buttons for both players, match reset, winner detection, and save to match history.
+- Supports multi-device synchronization - Browser A score changes instantly appear on Browser B.
+
+---
+
 ### Template for Future Entries:
 
 **Feature:** [Name]

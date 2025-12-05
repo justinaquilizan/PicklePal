@@ -39,6 +39,11 @@ const Navbar = () => {
                   className="text-white hover:text-green-200 px-3 py-2 rounded-md text-sm font-medium">
                   Dashboard
                 </Link>
+                <Link
+                  to="/live-match"
+                  className="text-white hover:text-green-200 px-3 py-2 rounded-md text-sm font-medium">
+                  Live Match
+                </Link>
                 <button
                   onClick={handleLogout}
                   className="text-white hover:text-green-200 px-3 py-2 rounded-md text-sm font-medium">
