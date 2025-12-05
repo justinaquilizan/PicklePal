@@ -17,7 +17,7 @@ const Profile = () => {
         {/* Profile Card */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-6">
           <div className="text-center mb-6">
-            <div className="w-20 h-20 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-20 h-20 bg-linear-to-r from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-3xl text-white font-bold">
                 {auth.user?.username?.charAt(0)?.toUpperCase() || "U"}
               </span>
